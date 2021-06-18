@@ -3,7 +3,7 @@ name: release-build
 on:
   push:
     tags:
-      - v2.8.6
+      - v*.*.*
 
 jobs:
   release:
