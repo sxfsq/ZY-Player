@@ -5,9 +5,7 @@
       <div class="info">
         <a @click="linkOpen('http://zyplayer.fun/')">官网</a>
         <a @click="linkOpen('https://github.com/Hunlongyu/ZY-Player')">Github</a>
-        <a @click="linkOpen('https://github.com/Hunlongyu/ZY-Player/releases/tag/v' + pkg.version)">v{{pkg.version}}更新日志</a>
-        <a @click="linkOpen('https://github.com/Hunlongyu/ZY-Player/issues/80')">常见问题</a>
-        <a @click="linkOpen('https://github.com/Hunlongyu/ZY-Player/issues')">反馈建议</a>
+        <a @click="linkOpen('https://github.com/Hunlongyu/ZY-Player/discussions/776')">软件完全免费，如遇收费，请立即给差评并退费！</a>
         <a style="color:#38dd77" @click="openUpdate()" v-show="update.find" >最新版本v{{update.version}}</a>
       </div>
       <div class="shortcut">
@@ -148,13 +146,6 @@
           </div>
         </div>
       </div>
-      <div class="qrcode">
-        <div class="title">请作者吃辣条</div>
-        <div class="qrcode-box">
-          <img class="qrcode-item" src="../assets/image/wepay-hunlongyu.png">
-          <img class="qrcode-item" src="../assets/image/wepay_cuiocean.jpg">
-        </div>
-      </div>
       <div class="clearDB">
         <span @click="clearDBEvent" class="clearBtn">软件重置</span>
         <span @click="changePasswordEvent" class="clearBtn">设置密码</span>
@@ -265,7 +256,8 @@ import { mapMutations } from 'vuex'
 import pkg from '../../package.json'
 import { setting, sites, shortcut } from '../lib/dexie'
 import { localKey as defaultShortcuts } from '../lib/dexie/initData'
-import { shell, clipboard, remote, ipcRenderer } from 'electron'
+import { shell, clipboard, ipcRenderer } from 'electron'
+const remote = require('@electron/remote')
 import db from '../lib/dexie/dexie'
 import zy from '../lib/site/tools'
 export default {
@@ -337,9 +329,14 @@ export default {
         if (!this.setting.sitesDataURL) this.resetDefaultSitesDataURL()
       })
     },
-    getDefaultSites () {
-      zy.getDefaultSites(this.setting.sitesDataURL).then(res => {
-        if (res.length > 0) {
+    async getDefaultSites () {
+      const s = await setting.find()
+      zy.getDefaultSites(s.sitesDataURL).then(res => {
+        if (res && typeof res === 'string') {
+          const json = JSON.parse(res)
+          sites.clear().then(sites.bulkAdd(json))
+        }
+        if (res && typeof res === 'object') {
           sites.clear().then(sites.bulkAdd(res))
         }
       }).catch(error => {
@@ -390,7 +387,7 @@ export default {
       this.updateSettingEvent()
     },
     resetDefaultSitesDataURL () {
-      this.setting.sitesDataURL = 'https://gitee.com/cuiocean/ZY-Player-Resources/raw/main/Sites/Sites.json'
+      this.setting.sitesDataURL = 'https://raw.iqiq.io/Hunlongyu/ZY-Player-Resources/main/Sites/20220713.json'
     },
     configSitesDataURL () {
       if (!this.setting.sitesDataURL) this.resetDefaultSitesDataURL()
@@ -598,7 +595,7 @@ export default {
     }
   },
   created () {
-    this.getSites()
+    // this.getSites()
     this.getSetting()
     this.getShortcut()
     this.checkUpdate()

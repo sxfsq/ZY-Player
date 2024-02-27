@@ -179,7 +179,7 @@
 import { mapMutations } from 'vuex'
 import { history, star, sites, setting } from '../lib/dexie'
 import zy from '../lib/site/tools'
-import { remote } from 'electron'
+const remote = require('@electron/remote')
 import fs from 'fs'
 import Sortable from 'sortablejs'
 import Waterfall from 'vue-waterfall-plugin'
@@ -324,7 +324,7 @@ export default {
         switch (this.sortKeyword) {
           case '按上映年份':
             filteredData.sort(function (a, b) {
-              return a.detail.year - b.detail.year
+              return b.detail.year - a.detail.year
             })
             break
           case '按片名':

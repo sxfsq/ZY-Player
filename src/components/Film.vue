@@ -510,7 +510,7 @@ export default {
       switch (this.sortKeyword) {
         case '按上映年份':
           filteredData.sort(function (a, b) {
-            return a.year - b.year
+            return b.year - a.year
           })
           break
         case '按片名':
@@ -524,8 +524,14 @@ export default {
           })
           break
         default:
+          filteredData.sort(function (a, b) {
+            return new Date(b.last) - new Date(a.last)
+          })
           break
       }
+
+      // Get unique film data
+      filteredData = Array.from(new Set(filteredData))
       if (this.showFind) {
         this.filteredSearchContents = filteredData
       } else {
@@ -866,12 +872,34 @@ export default {
         this.showFind = false
       }
     },
+    async getDefaultSites () {
+      const s = await setting.find()
+      zy.getDefaultSites(s.sitesDataURL).then(res => {
+        if (res && typeof res === 'string') {
+          const json = JSON.parse(res)
+          sites.clear().then(sites.bulkAdd(json))
+        }
+        if (res && typeof res === 'object') {
+          sites.clear().then(sites.bulkAdd(res))
+        }
+        sites.all().then(res => {
+          if (res) {
+            this.sites = res.filter(item => item.isActive)
+            if (this.site === undefined || !this.sites.some(x => x.key === this.site.key)) {
+              this.site = this.sites[0]
+              this.selectedSiteName = this.sites[0].name
+            }
+          }
+        })
+      }).catch(error => {
+        this.$message.error('获取云端源站失败. ' + error)
+      })
+    },
     getAllSites () {
       sites.all().then(res => {
         if (res.length <= 0) {
-          this.site = {}
-          this.type = {}
-          this.list = []
+          this.$message.warning('检测到视频源未能正常加载, 即将重置源.')
+          this.getDefaultSites()
         } else {
           this.sites = res.filter(item => item.isActive)
           if (this.site === undefined || !this.sites.some(x => x.key === this.site.key)) {
